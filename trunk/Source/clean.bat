@@ -1,0 +1,10 @@
+del    *.dcu  /s
+del    *.identcache  /s
+del    *.local  /s
+del    *.rsm  /s
+del    *.~*  /s
+del    ~*.*  /s
+del    *.bak   /s
+del    *.vlb  /s
+del    *.exe  /s
+del    *.dll  /s
