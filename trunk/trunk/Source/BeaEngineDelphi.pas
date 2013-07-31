@@ -10,6 +10,7 @@
 // ====================================================================
 // [+] BranchTaken,BranchNotTaken added in TPREFIXINFO v3.1.0
 unit BeaEngineDelphi;
+
 // ====================================================================
 // Default link type is static lib
 // comment below line to switch link with DLL
@@ -34,115 +35,31 @@ unit BeaEngineDelphi;
 // You should have received a copy of the GNU Lesser General Public License
 // along with BeaEngine.  If not, see <http://www.gnu.org/licenses/>.
 {
-武稀松2012.2修正.
-把32位64位文件合并.
+  武稀松2012.2修正.
+  把32位64位文件合并.
 }
+
+{$Z4}
 interface
 
-uses Windows{, SysUtils};
+uses Windows {, SysUtils};
 
 const
   INSTRUCT_LENGTH = 64;
 
 type
   UIntPtr = NativeInt;
-  Int8    = ShortInt;
-  Int16   = SmallInt;
-  Int32   = Integer;
-  IntPtr  = NativeInt;
-  UInt8   = Byte;
-  UInt16  = Word;
-  UInt32  = Cardinal;
+  Int8 = ShortInt;
+  Int16 = SmallInt;
+  Int32 = Integer;
+  IntPtr = NativeInt;
+  UInt8 = Byte;
+  UInt16 = Word;
+  UInt32 = Cardinal;
+
 type
 
   TREX_Struct = packed record
-    W_: BYTE;
-    R_: BYTE;
-    X_: BYTE;
-    B_: BYTE;
-    state: BYTE;
-  end;
-
-type
-
-  TPREFIXINFO = packed record
-    Number: longint;
-    NbUndefined: longint;
-    LockPrefix: BYTE;
-    OperandSize: BYTE;
-    AddressSize: BYTE;
-    RepnePrefix: BYTE;
-    RepPrefix: BYTE;
-    FSPrefix: BYTE;
-    SSPrefix: BYTE;
-    GSPrefix: BYTE;
-    ESPrefix: BYTE;
-    CSPrefix: BYTE;
-    DSPrefix: BYTE;
-    BranchTaken: BYTE; // v3.1.0 added 2009-11-05
-    BranchNotTaken: BYTE; // v3.1.0 added 2009-11-05
-    REX: TREX_Struct;
-    alignment: array [0 .. 1] of AnsiChar;
-  end;
-
-type
-
-  TEFLStruct = packed record
-    OF_: BYTE;
-    SF_: BYTE;
-    ZF_: BYTE;
-    AF_: BYTE;
-    PF_: BYTE;
-    CF_: BYTE;
-    TF_: BYTE;
-    IF_: BYTE;
-    DF_: BYTE;
-    NT_: BYTE;
-    RF_: BYTE;
-    alignment: BYTE;
-  end;
-
-type
-
-  TMEMORYTYPE = packed record
-    BaseRegister: longint;
-    IndexRegister: longint;
-    Scale: longint;
-    Displacement: int64;
-  end;
-
-type
-
-  TINSTRTYPE = packed record
-    Category: longint;
-    Opcode: longint;
-    Mnemonic: array [0 .. 15] of AnsiChar;
-    BranchType: longint;
-    Flags: TEFLStruct;
-    AddrValue: int64;
-    Immediat: int64;
-    ImplicitModifiedRegs: longint;
-  end;
-
-type
-
-  TARGTYPE = packed record
-{$IFDEF CPUX64}
-    ArgMnemonic: array [0 .. 63] of AnsiChar;
-{$ELSE}
-    ArgMnemonic: array [0 .. 31] of AnsiChar;
-{$ENDIF}
-    ArgType: longint;
-    ArgSize: longint;
-    ArgPosition: longint;
-    AccessMode: longint;
-    Memory: TMEMORYTYPE;
-    SegmentReg: longint;
-  end;
-
-type
-
-  REX_Struct = packed record
     W_: UInt8;
     R_: UInt8;
     X_: UInt8;
@@ -150,31 +67,75 @@ type
     state: UInt8;
   end;
 
-  InternalDatas = packed record
-    EIP_: UIntPtr;
-    EIP_VA: UInt64;
-    EIP_REAL: UIntPtr;
-    OriginalOperandSize, OperandSize, MemDecoration, AddressSize, MOD_, RM_,
-      INDEX_, SCALE_, BASE_, MMX_, SSE_, CR_, DR_, SEG_, REGOPCODE: Int32;
-    DECALAGE_EIP: UInt32;
-    FORMATNUMBER, SYNTAX_: Int32;
-    EndOfBlock: UInt64;
-    RelativeAddress: Int32;
-    Architecture: UInt32;
-    ImmediatSize, NB_PREFIX, PrefRepe, PrefRepne: Int32;
-    SEGMENTREGS, SEGMENTFS: UInt32;
-    third_arg, TAB_, ERROR_OPCODE: Int32;
-    REX: REX_Struct;
-    OutOfBlock: Int32;
+  TPREFIXINFO = packed record
+    Number: Int32;
+    NbUndefined: Int32;
+    LockPrefix: UInt8;
+    OperandSize: UInt8;
+    AddressSize: UInt8;
+    RepnePrefix: UInt8;
+    RepPrefix: UInt8;
+    FSPrefix: UInt8;
+    SSPrefix: UInt8;
+    GSPrefix: UInt8;
+    ESPrefix: UInt8;
+    CSPrefix: UInt8;
+    DSPrefix: UInt8;
+    BranchTaken: UInt8; // v3.1.0 added 2009-11-05
+    BranchNotTaken: UInt8; // v3.1.0 added 2009-11-05
+    REX: TREX_Struct;
+  end;
+
+  TEFLStruct = packed record
+    OF_: UInt8;
+    SF_: UInt8;
+    ZF_: UInt8;
+    AF_: UInt8;
+    PF_: UInt8;
+    CF_: UInt8;
+    TF_: UInt8;
+    IF_: UInt8;
+    DF_: UInt8;
+    NT_: UInt8;
+    RF_: UInt8;
+    alignment: UInt8;
+  end;
+
+  TMEMORYTYPE = packed record
+    BaseRegister: Int32;
+    IndexRegister: Int32;
+    Scale: Int32;
+    Displacement: Int64;
+  end;
+
+  TINSTRTYPE = packed record
+    Category: Int32;
+    Opcode: Int32;
+    Mnemonic: array [0 .. 15] of AnsiChar;
+    BranchType: Int32;
+    Flags: TEFLStruct;
+    AddrValue: UInt64;
+    Immediat: Int64;
+    ImplicitModifiedRegs: UInt32;
+  end;
+
+  TARGTYPE = packed record
+    ArgMnemonic: array [0 .. 32 - 1] of AnsiChar;
+    ArgType: Int32;
+    ArgSize: Int32;
+    ArgPosition: Int32;
+    AccessMode: UInt32;
+    Memory: TMEMORYTYPE;
+    SegmentReg: Int32;
   end;
 
   _Disasm = packed record
     EIP: UIntPtr;
-    VirtualAddr: int64;
-    SecurityBlock: longint;
+    VirtualAddr: UInt64;
+    SecurityBlock: UInt32;
     CompleteInstr: array [0 .. (INSTRUCT_LENGTH) - 1] of AnsiChar;
-    Archi: longint;
-    Options: int64;
+    Archi: UInt32;
+    Options: UInt64;
     Instruction: TINSTRTYPE;
     Argument1: TARGTYPE;
     Argument2: TARGTYPE;
@@ -201,7 +162,7 @@ const
   InUsePrefix = 1;
 
 type
-  INSTRUCTION_TYPE = longint;
+  INSTRUCTION_TYPE = Int32;
 
 Const
   GENERAL_PURPOSE_INSTRUCTION = $10000;
@@ -266,7 +227,7 @@ Const
   ROUND_INSTRUCTION = 43;
 
 type
-  EFLAGS_STATES = longint;
+  EFLAGS_STATES = Int32;
 
 Const
   TE_ = 1;
@@ -277,7 +238,7 @@ Const
   PR_ = $20;
 
 type
-  BRANCH_TYPE = longint;
+  BRANCH_TYPE = Int32;
 
 Const
   JO = 1;
@@ -304,7 +265,7 @@ Const
   JNB = -(9);
 
 type
-  ARGUMENTS_TYPE = longint;
+  ARGUMENTS_TYPE = Int32;
 
 Const
   NO_ARGUMENT = $10000000;
@@ -346,7 +307,7 @@ Const
   REG15 = $8000;
 
 type
-  SPECIAL_INFO = longint;
+  SPECIAL_INFO = Int32;
 
 Const
   UNKNOWN_OPCODE = -(1);
@@ -387,8 +348,8 @@ end;
 
 function strcpy(dest, src: PAnsiChar): PAnsiChar; cdecl;
 begin
-  Move(src^, dest^, (StrLen(src) + 1) * SizeOf(AnsiChar));
-  Result := Dest;
+  Move(src^, dest^, (strlen(src) + 1) * SizeOf(AnsiChar));
+  Result := dest;
 end;
 
 function memset(Destination: Pointer; C: Integer; Count: NativeInt)
