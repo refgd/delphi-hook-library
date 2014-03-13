@@ -6,7 +6,7 @@ unit HookUtils;
   主页  http://www.raysoftware.cn
 
   通用Hook库.
-  支持X86和X64.
+  支持X86和X64.                     Get
   使用了开源的BeaEngine反汇编引擎.BeaEngine的好处是可以用BCB编译成OMF格式的Obj,
   被链接进Delphi的DCU和目标文件中.不需要额外带DLL.
   BeaEngin引擎
@@ -280,6 +280,29 @@ begin
 end;
 
 function HookProc(Func, NewFunc: Pointer): Pointer;
+  procedure FixFunc();
+  var
+    ldiasm: TDISASM;
+    len: longint;
+  begin
+    Result := 0;
+    ZeroMemory(@ldiasm, SizeOf(ldiasm));
+    ldiasm.EIP := UIntPtr(Func);
+    ldiasm.Archi := {$IFDEF CPUX64}64{$ELSE}32{$ENDIF};
+
+    len := Disasm(ldiasm);
+    Inc(ldiasm.EIP, len);
+    //
+    if (ldiasm.Instruction.Mnemonic[0] = 'j') and
+      (ldiasm.Instruction.Mnemonic[1] = 'm') and
+      (ldiasm.Instruction.Mnemonic[2] = 'p') and
+      (ldiasm.Instruction.AddrValue <> 0) then
+    begin
+      Func := Pointer(ldiasm.Instruction.AddrValue);
+      FixFunc();
+    end;
+  end;
+
 var
   oldProc: POldProc;
   newProc: PNewProc;
@@ -292,6 +315,8 @@ begin
   Result := nil;
   if (Func = nil) or (NewFunc = nil) then
     Exit;
+
+  FixFunc();
   newProc := PNewProc(Func);
   backCodeSize := CalcHookCodeSize(Func);
   if backCodeSize < 0 then
