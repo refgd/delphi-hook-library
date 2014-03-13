@@ -29,7 +29,14 @@ interface
   64位中会有一种情况失败,就是VirtualAlloc不能在被Hook函数地址正负2Gb范围内分配到内存.
   不过这个可能微乎其微.几乎不可能发生.
 }
+function HookProc(Func, NewFunc: Pointer; out originalFunc: Pointer)
+  : Boolean; overload;
+function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer; out originalFunc: Pointer): Boolean;
+  overload;
+
+//deprecated 不建议试用,返回值后返回,这时无法Hook函数中使用的设置虚拟内存和线程状态的函数
 function HookProc(Func, NewFunc: Pointer): Pointer; overload;
+//deprecated 不建议试用,返回值后返回,这时无法Hook函数中使用的设置虚拟内存和线程状态的函数
 function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer): Pointer;
   overload;
 { 计算COM对象中方法的地址;AMethodIndex是方法的索引.
@@ -46,9 +53,9 @@ function CalcInterfaceMethodAddr(var AInterface; AMethodIndex: Integer)
   : Pointer;
 // 下COM对象方法的钩子
 function HookInterface(var AInterface; AMethodIndex: Integer;
-  NewFunc: Pointer): Pointer;
+  NewFunc: Pointer; out originalFunc: Pointer): Boolean;
 // 解除钩子
-function UnHook(OldFunc: Pointer): boolean;
+function UnHook(OldFunc: Pointer): Boolean;
 
 implementation
 
@@ -266,26 +273,38 @@ begin
 
 end;
 
+function HookProc(Func, NewFunc: Pointer): Pointer; overload;
+begin
+  if not HookProc(Func, NewFunc, Result) then
+    Result := nil;
+end;
+
 function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer): Pointer;
+  overload;
+begin
+  if not HookProc(DLLName, FuncName, NewFunc, Result) then
+    Result := nil;
+end;
+
+function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer; out originalFunc: Pointer): Boolean;
 var
   h: HMODULE;
 begin
-  Result := nil;
+  Result := False;
   h := GetModuleHandle(DLLName);
   if h = 0 then
     h := LoadLibrary(DLLName);
   if h = 0 then
     Exit;
-  Result := HookProc(GetProcAddress(h, FuncName), NewFunc);
+  Result := HookProc(GetProcAddress(h, FuncName), NewFunc, originalFunc);
 end;
 
-function HookProc(Func, NewFunc: Pointer): Pointer;
+function HookProc(Func, NewFunc: Pointer; out originalFunc: Pointer): Boolean;
   procedure FixFunc();
   var
     ldiasm: TDISASM;
     len: longint;
   begin
-    Result := 0;
     ZeroMemory(@ldiasm, SizeOf(ldiasm));
     ldiasm.EIP := UIntPtr(Func);
     ldiasm.Archi := {$IFDEF CPUX64}64{$ELSE}32{$ENDIF};
@@ -312,7 +331,7 @@ var
   nOriginalPriority: Integer;
   JmpAfterBackCode: PJMPCode;
 begin
-  Result := nil;
+  Result := FALSE;
   if (Func = nil) or (NewFunc = nil) then
     Exit;
 
@@ -331,13 +350,13 @@ begin
       Exit;
     //
 
-    Result := TryAllocMem(Func, PageSize);
+    originalFunc := TryAllocMem(Func, PageSize);
     // VirtualAlloc(nil, PageSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    if Result = nil then
+    if originalFunc = nil then
       Exit;
 
-    FillMemory(Result, SizeOf(TOldProc), $90);
-    oldProc := POldProc(Result);
+    FillMemory(originalFunc, SizeOf(TOldProc), $90);
+    oldProc := POldProc(originalFunc);
 {$IFDEF USEINT3}
     oldProc.Int3OrNop := $CC;
 {$ENDIF}
@@ -379,13 +398,14 @@ begin
     // 刷新处理器中的指令缓存.以免这部分指令被缓存.执行的时候不一致.
     FlushInstructionCache(GetCurrentProcess(), newProc, backCodeSize);
     FlushInstructionCache(GetCurrentProcess(), oldProc, PageSize);
+    Result := True;
   finally
     ResumOtherThread(threads);
     SetThreadPriority(GetCurrentThread(), nOriginalPriority);
   end;
 end;
 
-function UnHook(OldFunc: Pointer): boolean;
+function UnHook(OldFunc: Pointer): Boolean;
 var
   oldProc: POldProc ABSOLUTE OldFunc;
   newProc: PNewProc;
@@ -469,10 +489,9 @@ begin
 end;
 
 function HookInterface(var AInterface; AMethodIndex: Integer;
-  NewFunc: Pointer): Pointer;
+  NewFunc: Pointer; out originalFunc: Pointer): Boolean;
 begin
-  Result := HookProc(CalcInterfaceMethodAddr(AInterface, AMethodIndex),
-    NewFunc);
+  Result := HookProc(CalcInterfaceMethodAddr(AInterface, AMethodIndex), NewFunc, originalFunc);
 end;
 
 end.
