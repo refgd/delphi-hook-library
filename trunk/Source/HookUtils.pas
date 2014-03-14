@@ -31,13 +31,13 @@ interface
 }
 function HookProc(Func, NewFunc: Pointer; out originalFunc: Pointer)
   : Boolean; overload;
-function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer; out originalFunc: Pointer): Boolean;
+function HookProcInModule(DLLName, FuncName: PChar; NewFunc: Pointer; out originalFunc: Pointer): Boolean;
   overload;
 
 //deprecated 不建议试用,返回值后返回,这时无法Hook函数中使用的设置虚拟内存和线程状态的函数
 function HookProc(Func, NewFunc: Pointer): Pointer; overload;
 //deprecated 不建议试用,返回值后返回,这时无法Hook函数中使用的设置虚拟内存和线程状态的函数
-function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer): Pointer;
+function HookProcInModule(DLLName, FuncName: PChar; NewFunc: Pointer): Pointer;
   overload;
 { 计算COM对象中方法的地址;AMethodIndex是方法的索引.
   AMethodIndex是接口包含父接口的方法的索引.
@@ -67,7 +67,7 @@ const
 {$IFDEF CPUX64}
 {$DEFINE USELONGJMP}
 {$ENDIF}
-  { .$DEFINE USEINT3 }// 在机器指令中插入INT3,断点指令.方便调试.
+  {.$DEFINE USEINT3 }// 在机器指令中插入INT3,断点指令.方便调试.
 
 type
   THandles = array of THandle;
@@ -279,14 +279,14 @@ begin
     Result := nil;
 end;
 
-function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer): Pointer;
+function HookProcInMode(DLLName, FuncName: PChar; NewFunc: Pointer): Pointer;
   overload;
 begin
-  if not HookProc(DLLName, FuncName, NewFunc, Result) then
+  if not HookProcInModule(DLLName, FuncName, NewFunc, Result) then
     Result := nil;
 end;
 
-function HookProc(DLLName, FuncName: PChar; NewFunc: Pointer; out originalFunc: Pointer): Boolean;
+function HookProcInModule(DLLName, FuncName: PChar; NewFunc: Pointer; out originalFunc: Pointer): Boolean;
 var
   h: HMODULE;
 begin
